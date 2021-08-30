@@ -35,7 +35,7 @@ def get_chemical_shifts(str_file,auth_tag=False):
             if d[id4] == 'H':
                 if d[id2] == '.':
                     d[id2] = 'A'  # temp fix if asym id is missing
-                amide_cs[(d[id1], d[id2], d[id3], d[id4])] = (d[id5],get_sigma_value(d[id3],float(d[id5])))
+                amide_cs[(d[id1], d[id2], d[id3], d[id4])] = (d[id5], get_z_score(d[id3], float(d[id5])))
             if d[id3] in aromatic_atoms.keys():
                 if d[id2] == '.':
                     d[id2] = 'A'  # temp fix if asym id is missing
@@ -138,7 +138,7 @@ def get_bmrb_data(bmrb_id,auth_tag = False, nmrbox=False):
         bmrb_data = get_chemical_shifts('./data/BMRB/{}.str'.format(bmrb_id),auth_tag)
     return bmrb_data
 
-def get_sigma_value_full(res, x):
+def get_z_score_full(res, x):
     m = {'ALA':8.193,'ARG':8.242,'ASN':8.331,'ASP':8.300,'CYS':8.379,'GLN':8.216,'GLU':8.330,'GLY':8.327,
          'HIS':8.258,'ILE':8.263,'LEU':8.219,'LYS':8.175,'MET':8.258,'PHE':8.337,'SER':8.277,'THR':8.235,
          'TRP':8.270,'TYR':8.296,'VAL':8.273}
@@ -151,7 +151,7 @@ def get_sigma_value_full(res, x):
         sp = 0.00
     return round(sp,3)
 
-def get_sigma_value(res, x):
+def get_z_score(res, x):
     m = {'ALA':8.194,'ARG':8.234,'ASN':8.324,'ASP':8.300,'CYS':8.386,'GLN':8.219,'GLU':8.330,'GLY':8.330,
          'HIS':8.247,'ILE':8.262,'LEU':8.215,'LYS':8.177,'MET':8.251,'PHE':8.335,'SER':8.277,'THR':8.232,
          'TRP':8.264,'TYR':8.289,'VAL':8.270}
