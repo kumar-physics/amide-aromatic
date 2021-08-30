@@ -40,12 +40,12 @@ def find_angle( p, c, d):
     ang_deg = (180 / numpy.pi) * ang
     #ang_deg2 = (180 / numpy.pi) * ang2
     # print(ang_deg)
-    s_ang = solid_angle(ang_deg, d )
+    s_ang = solid_angle(ang_deg, d)
     return ang_deg, s_ang
 
 
 def solid_angle(a_deg, r):
-    s = 1.4
+    s = 1.4 #C-C bond length
     A=((3.0*numpy.sqrt(3))/2.0)*s*s #area of the hexagonal plane
     a = (numpy.pi / 180) * a_deg
     # sa2=2*numpy.pi*(1.0-1.0/(numpy.sqrt(1+(A*numpy.cos(a)/(numpy.pi*r1**r1)))))
@@ -56,7 +56,31 @@ def solid_angle(a_deg, r):
     # print (a_deg,sa_deg,sa_deg2)
     return sa_deg
 
-
+def get_aromatic_info(pdb_data):
+    aromatic_atoms = {
+        'PHE': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'HD1', 'HD2', 'HE1', 'HE2', 'HZ'],
+        'TYR': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'HD1', 'HD2', 'HE1', 'HE2', 'HH'],
+        'TRP': ['CD2', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2', 'HE3', 'HZ2', 'HZ3', 'HH2', 'HE1'],
+        'HIS': ['CG', 'ND1', 'CD2', 'CE1', 'NE2', 'HD1', 'HD2', 'HE1', 'HE2', 'xx', 'yy']  # if needed un comment
+    }
+    ring_atoms = {
+        'PHE': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ'],
+        'TYR': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ'],
+        'TRP': ['CD2', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2'],
+        'HIS': ['CG', 'ND1', 'CD2', 'CE1', 'NE2', ]  # if needed un comment
+    }
+    aromtic_residues = sorted(
+        list(set([(int(i[0]), i[1], i[2]) for i in pdb_data[1].keys() if i[2] in aromatic_atoms.keys()])))
+    ar_info = {}
+    for m in pdb_data.keys():
+        ar_info[m] = {}
+        for ar_res in aromtic_residues:
+            p = []
+            for atm in ring_atoms[ar_res[2]]:
+                p.append(pdb_data[m][(str(ar_res[0]), ar_res[1], ar_res[2], atm)])
+            c = get_centroid(p)
+            ar_info[m][(str(ar_res[0]), ar_res[1], ar_res[2])] = (c, p)
+    return ar_info
 
 
 def calculate_interaction(pdb,bmrb):
@@ -97,28 +121,7 @@ def calculate_interaction(pdb,bmrb):
         else:
             raise KeyError
         amide_chemical_shift, aromatic_chemical_shift, entity_size, assembly_size = bmrb_data
-        aromatic_atoms = {
-            'PHE': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'HD1', 'HD2', 'HE1', 'HE2', 'HZ'],
-            'TYR': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'HD1', 'HD2', 'HE1', 'HE2', 'HH'],
-            'TRP': ['CD2', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2', 'HE3', 'HZ2', 'HZ3', 'HH2', 'HE1'],
-            'HIS': ['CG', 'ND1', 'CD2', 'CE1', 'NE2', 'HD1', 'HD2', 'HE1', 'HE2', 'xx', 'yy']  # if needed un comment
-        }
-        ring_atoms = {
-            'PHE': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ'],
-            'TYR': ['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ'],
-            'TRP': ['CD2', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2'],
-            'HIS': ['CG', 'ND1', 'CD2', 'CE1', 'NE2',]  # if needed un comment
-        }
-        aromtic_residues = sorted(list(set([(int(i[0]),i[1],i[2]) for i in pdb_data[1].keys() if i[2] in aromatic_atoms.keys()])))
-        ar_info={}
-        for m in pdb_data.keys():
-            ar_info[m]={}
-            for ar_res in aromtic_residues:
-                p=[]
-                for atm in ring_atoms[ar_res[2]]:
-                    p.append(pdb_data[m][(str(ar_res[0]),ar_res[1],ar_res[2],atm)])
-                c=get_centroid(p)
-                ar_info[m][(str(ar_res[0]),ar_res[1],ar_res[2])]=(c,p)
+        ar_info = get_aromatic_info(pdb_data)
         dist,angle,solid_angle = analyze_enzemble(ar_info,pdb_data)
         if not os.path.isdir('./data'):
             os.system('mkdir ./data')
@@ -145,12 +148,6 @@ def calculate_interaction(pdb,bmrb):
                    ','.join([str(i) for i in angle[atm][dist[atm][0][0]]]),
                    ','.join([str(i) for i in solid_angle[atm][dist[atm][0][0]]])))
         fo.close()
-
-
-
-
-
-
 
 def analyze_enzemble(ar_info,pdb_data):
     amide_res = {}
@@ -185,9 +182,6 @@ def analyze_enzemble(ar_info,pdb_data):
         s_dist[aa]=sorted_dist
     return s_dist,angle,solid_angle
 
-
-
-
-
 if __name__=="__main__":
-    calculate_interaction('1WYO','11086')
+    plot_3d('data/output/1WYO-11086-ORIG_ORIG.csv')
+    #calculate_interaction('1WYO','11086')

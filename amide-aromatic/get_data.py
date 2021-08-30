@@ -104,29 +104,38 @@ def get_coordinates(cif_file, use_auth_tag=True):
     return pdb_models
 
 
-def get_pdb_data(pdb_id, auth_tag=False):
-    if not os.path.isdir('./data'):
-        os.system('mkdir ./data')
-    if not os.path.isdir('./data/PDB'):
-        os.system('mkdir ./data/PDB')
-    cif_file = './data/PDB/{}.cif'.format(pdb_id)
-    if not os.path.isfile(cif_file):
-        cmd = 'wget https://files.rcsb.org/download/{}.cif -O ./data/PDB/{}.cif'.format(pdb_id, pdb_id)
-        os.system(cmd)
-    pdb_data = get_coordinates('./data/PDB/{}.cif'.format(pdb_id),auth_tag)
-    return pdb_data
+def get_pdb_data(pdb_id, auth_tag=False, nmrbox=False):
+    if nmrbox:
+        cif_file_path = '/reboxitory/2021/07/PDB/data/structures/all/mmCIF/{}.cif.gz'.format(pdb_id.lower())
+        pdb_data = get_coordinates(cif_file_path,auth_tag)
+    else:
+        if not os.path.isdir('./data'):
+            os.system('mkdir ./data')
+        if not os.path.isdir('./data/PDB'):
+            os.system('mkdir ./data/PDB')
+        cif_file = './data/PDB/{}.cif'.format(pdb_id)
+        if not os.path.isfile(cif_file):
+            cmd = 'wget https://files.rcsb.org/download/{}.cif -O ./data/PDB/{}.cif'.format(pdb_id, pdb_id)
+            os.system(cmd)
+        pdb_data = get_coordinates('./data/PDB/{}.cif'.format(pdb_id),auth_tag)
+        return pdb_data
 
-
-def get_bmrb_data(bmrb_id,auth_tag = False):
-    if not os.path.isdir('./data'):
-        os.system('mkdir ./data')
-    if not os.path.isdir('./data/BMRB'):
-        os.system('mkdir ./data/BMRB')
-    str_file = './data/BMRB/{}.str'.format(bmrb_id)
-    if not os.path.isfile(str_file):
-        cmd = 'wget http://rest.bmrb.io/bmrb/{}/nmr-star3 -O ./data/BMRB/{}.str'.format(bmrb_id, bmrb_id)
-        os.system(cmd)
-    bmrb_data = get_chemical_shifts('./data/BMRB/{}.str'.format(bmrb_id),auth_tag)
+def get_bmrb_data(bmrb_id,auth_tag = False, nmrbox=False):
+    if nmrbox:
+        str_file_path = '/reboxitory/2021/07/BMRB/macromolecules/bmr{}/bmr{}_3.str'.format(
+            bmrb_id,bmrb_id
+        )
+        bmrb_data = get_chemical_shifts(str_file_path, auth_tag)
+    else:
+        if not os.path.isdir('./data'):
+            os.system('mkdir ./data')
+        if not os.path.isdir('./data/BMRB'):
+            os.system('mkdir ./data/BMRB')
+        str_file = './data/BMRB/{}.str'.format(bmrb_id)
+        if not os.path.isfile(str_file):
+            cmd = 'wget http://rest.bmrb.io/bmrb/{}/nmr-star3 -O ./data/BMRB/{}.str'.format(bmrb_id, bmrb_id)
+            os.system(cmd)
+        bmrb_data = get_chemical_shifts('./data/BMRB/{}.str'.format(bmrb_id),auth_tag)
     return bmrb_data
 
 def get_sigma_value_full(res, x):
